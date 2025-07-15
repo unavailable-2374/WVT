@@ -1,247 +1,180 @@
-# PAF Coverage Tools
+# PAF Dual Coverage & Gene Cross-Matching Analysis
 
-A collection of Python tools for analyzing alignment coverage from PAF (Pairwise Alignment Format) files against BED-defined regions. These tools provide comprehensive base-level coverage statistics, supporting both query and target sequence analysis with multi-core processing capabilities.
+This repository contains two complementary Python scripts for genomic alignment analysis:
+
+1. **`paf_dual_coverage.py`**  
+   - Reads PAF-format alignment files  
+   - Computes “dual” coverage (both query- and reference-based coverage)  
+   - Merges overlapping alignment intervals  
+   - Outputs per-sequence coverage summaries  
+
+2. **`gene_cross_matching_analysis.py`**  
+   - Aggregates cross-species gene match data from TSV files  
+   - Filters alignments by score and coverage thresholds  
+   - Computes per-gene summary statistics (mean, median, max scores, match counts)  
+   - Produces CSV summary and publication-ready plots  
+
+---
 
 ## Table of Contents
-- [Overview](#overview)
-- [Features](#features)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Tools](#tools)
-  - [1. Query-Target Coverage Calculator](#1-query-target-coverage-calculator-1py)
-  - [2. General Coverage Calculator](#2-general-coverage-calculator-coveragepy)
-- [Input Formats](#input-formats)
-- [Usage Examples](#usage-examples)
-- [Output Format](#output-format)
-- [Performance Considerations](#performance-considerations)
-- [Contributing](#contributing)
-- [License](#license)
 
-## Overview
+- [Features](#features)  
+- [Installation](#installation)  
+- [Usage](#usage)  
+  - [PAF Dual Coverage](#paf-dual-coverage)  
+  - [Gene Cross-Matching Analysis](#gene-cross-matching-analysis)  
+- [Command-Line Arguments](#command-line-arguments)  
+- [Output Files](#output-files)  
+- [Dependencies](#dependencies)  
+- [Examples](#examples)  
+- [Contributing](#contributing)  
+- [License](#license)  
 
-This repository contains two specialized tools for analyzing sequence alignment coverage:
-
-1. **`paf_dual_coverage.py`** - A high-performance tool specifically designed for analyzing query and target coverage from PAF alignments with multi-core processing support
-2. **`paf_coverage.py`** - A general-purpose coverage calculator for any BED-defined regions
-
-Both tools parse CIGAR strings for accurate base-level coverage calculation and provide detailed statistics including coverage percentage, depth distribution, and per-region analysis.
+---
 
 ## Features
 
-### Common Features
-- Base-level coverage calculation using CIGAR string parsing
-- Support for PAF format (minimap2, wfmash, etc.)
-- BED file support for defining regions of interest
-- Mapping quality filtering
-- Detailed coverage statistics (coverage %, average depth, max depth)
-- Per-region detailed reports
-- Identification of uncovered regions
+- **High-performance PAF parsing** using pure Python  
+- **Efficient interval merging**, avoids double-counting overlaps  
+- **Flexible filtering** by score & coverage in cross-species matching  
+- **Data aggregation** via pandas for per-gene statistics  
+- **Automated plotting** of distribution histograms and scatter plots  
+- Well-documented code with extensive inline comments for easy customization  
 
-### Tool-Specific Features
-
-**Query-Target Coverage Calculator (`paf_dual_coverage.py`)**:
-- Multi-core parallel processing for large PAF files
-- Separate tracking of query and target coverage
-- Interval tree implementation for efficient region lookup
-- Progress bar with real-time statistics
-- Optimized for high-throughput analysis
-
-**General Coverage Calculator (`paf_coverage.py`)**:
-- Support for merging multiple BED files
-- Flexible coverage analysis for any reference sequences
-- Simpler single-threaded implementation
-
-## Requirements
-
-- Python 3.6 or higher
-- Required Python packages:
-  - `tqdm` (for progress bars in `paf_dual_coverage.py`)
-  - Standard library modules: `argparse`, `re`, `sys`, `os`, `collections`, `typing`, `concurrent.futures`, `multiprocessing`, `time`, `bisect`, `dataclasses`
+---
 
 ## Installation
 
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/paf-coverage-tools.git
-cd paf-coverage-tools
-```
+1. **Clone the repo**  
+    
+    git clone https://github.com/your-org/genome-analysis.git  
+    cd genome-analysis  
 
-2. Install dependencies:
-```bash
-pip install tqdm
-```
+2. **Create a virtual environment** (recommended)  
+    
+    python3 -m venv venv  
+    source venv/bin/activate  
 
-3. Make scripts executable:
-```bash
-chmod +x paf_dual_coverage.py paf_coverage.py
-```
+3. **Install dependencies**  
+    
+    pip install -r requirements.txt  
 
-## Tools
+---
 
-### 1. Query-Target Coverage Calculator (`paf_dual_coverage.py`)
+## Usage
 
-This tool is designed for analyzing alignments where you need to track coverage on both query and target sequences separately.
+### PAF Dual Coverage
 
-**Basic Usage:**
-```bash
-./paf_dual_coverage.py alignment.paf query_regions.bed target_regions.bed
-```
+    python paf_dual_coverage.py \
+      --paf path/to/alignments.paf \
+      --out dual_coverage_summary.tsv
 
-**Options:**
-- `--min-mapq`: Minimum mapping quality (default: 0)
-- `--processes, -p`: Number of processes for parallel processing (default: CPU count)
-- `--output-per-region`: Output detailed statistics for each region
-- `--output-uncovered`: Output detailed information about uncovered regions
-- `--output-file, -o`: Output file path (default: stdout)
+- `--paf` — Input PAF file (tab-delimited, standard 12-column format)  
+- `--out` — Output TSV; columns: `Name`, `Type` (`query` / `reference`), `Covered_bases`
 
-### 2. General Coverage Calculator (`paf_coverage.py`)
+### Gene Cross-Matching Analysis
 
-This tool provides flexible coverage analysis for any BED-defined regions against a reference.
+From within a directory containing one or more `*.tsv` cross-match files:
 
-**Basic Usage:**
-```bash
-./paf_coverage.py alignment.paf regions1.bed regions2.bed
-```
+    python gene_cross_matching_analysis.py
 
-**Options:**
-- `--min-mapq`: Minimum mapping quality (default: 0)
-- `--output-per-region`: Output detailed statistics for each region
-- `--output-uncovered`: Output detailed information about uncovered regions
-- `--merge-beds`: Merge statistics from both BED files
+This will:
 
-## Input Formats
+1. Read all `*.tsv` files in the current directory  
+2. Filter matches to `score >= 50` and `coverage >= 0.8`  
+3. Generate `gene_match_summary.csv` with per-gene metrics  
+4. Save two PNG plots:  
+   - `gene_match_summary_mean_score_histogram.png`  
+   - `gene_match_summary_count_vs_score.png`
 
-### PAF Format
-Standard PAF format as produced by minimap2, wfmash, or other aligners:
-```
-query_name query_len query_start query_end strand target_name target_len target_start target_end matches alignment_len mapq [optional_fields]
-```
+---
 
-The tools specifically look for CIGAR strings in the optional fields (format: `cg:Z:cigar_string`).
+## Command-Line Arguments
 
-### BED Format
-Standard BED format (0-based, half-open intervals):
-```
-chromosome start end [name]
-```
+### `paf_dual_coverage.py`
 
-Example:
-```
-chr1    1000    2000    region1
-chr1    5000    6000    region2
-chr2    1000    3000    region3
-```
+| Argument | Description                    | Required |
+| -------- | ------------------------------ | -------- |
+| `--paf`  | Path to input PAF file         | Yes      |
+| `--out`  | Path to write coverage summary | Yes      |
 
-## Usage Examples
+### `gene_cross_matching_analysis.py`
 
-### Example 1: Basic Query-Target Analysis
-```bash
-# Analyze coverage with default settings
-./paf_dual_coverage.py alignment.paf query_regions.bed target_regions.bed
+No arguments. The script auto-detects `*.tsv` in the working directory.
 
-# Use 40 cores for processing large files
-./paf_dual_coverage.py alignment.paf query_regions.bed target_regions.bed -p 40
+---
 
-# Filter low-quality alignments and save detailed output
-./paf_dual_coverage.py alignment.paf query_regions.bed target_regions.bed \
-    --min-mapq 30 \
-    --output-per-region \
-    --output-file results.txt
-```
+## Output Files
 
-### Example 2: General Coverage Analysis
-```bash
-# Basic coverage analysis
-./paf_coverage.py alignment.paf regions1.bed regions2.bed
+- **`dual_coverage_summary.tsv`**  
+      
+      #Name    Type       Covered_bases  
+      seq1     query      123456  
+      seq1     reference  98765  
+      ...  
 
-# Merge BED files and analyze together
-./paf_coverage.py alignment.paf regions1.bed regions2.bed --merge-beds
+- **`gene_match_summary.csv`**  
+      
+      query_gene,mean_score,median_score,max_score,match_count  
+      GeneA,75.3,74.0,98.1,5  
+      GeneB,62.1,60.5,85.0,3  
+      ...  
 
-# Output all uncovered regions
-./paf_coverage.py alignment.paf regions1.bed regions2.bed \
-    --output-uncovered \
-    --min-mapq 20
-```
+- **Plots**  
+  - `*_mean_score_histogram.png` — histogram of per-gene mean scores  
+  - `*_count_vs_score.png`    — scatter of match count vs. mean score  
 
-### Example 3: Pipeline Integration
-```bash
-# Run minimap2 and analyze coverage in a pipeline
-wfmash -t 8 reference.fa query.fa | \
-    ./paf_dual_coverage.py - query_regions.bed target_regions.bed -p 8
-```
+---
 
-## Output Format
+## Dependencies
 
-### Summary Statistics
-Both tools provide comprehensive summary statistics:
-- Total number of regions
-- Number of processed alignments
-- Filtered alignments (low quality)
-- Alignments without CIGAR information
-- Overall coverage percentage
-- Coverage distribution (fully covered, partially covered, uncovered regions)
-- Average depth statistics
+- Python ≥ 3.6  
+- `numpy`  
+- `pandas`  
+- `matplotlib`  
+- `argparse` (stdlib)  
+- `glob` (stdlib)  
 
-### Per-Region Statistics (with `--output-per-region`)
-- Region name and coordinates
-- Region length
-- Covered bases and percentage
-- Average depth (overall and covered bases only)
-- Maximum depth
+Optionally, via conda:
 
-### Example Output
-```
-=== Query Coverage Statistics (BED1) ===
-Regions: 150
-Processed alignments: 10,543
-Low quality filtered: 523
-No CIGAR info: 0
-Query sequences involved: 5
+    conda create -n genome-analysis python=3.9 numpy pandas matplotlib  
+    conda activate genome-analysis  
 
-Total length: 1,500,000 bp
-Covered bases: 1,350,000 bp
-Overall coverage: 90.00%
+---
 
-Region coverage:
-  Fully covered (100%): 120 regions
-  Partially covered (0-100%): 25 regions
-  Uncovered (0%): 5 regions
+## Examples
 
-Average depth statistics:
-  Average: 3.45×
-  Minimum: 0.50×
-  Maximum: 12.30×
-```
+1. **Compute dual coverage** for a set of long-read alignments:  
+      
+      python paf_dual_coverage.py \
+        --paf human_chr1_alignments.paf \
+        --out chr1_dual_coverage.tsv  
 
-## Performance Considerations
+2. **Analyze gene matches** across rice and grape species:  
+      
+      mv rice_vs_grape.tsv .  
+      mv grape_vs_maize.tsv .  
+      python gene_cross_matching_analysis.py  
 
-### Memory Usage
-- Both tools use interval trees for efficient region lookup
-- Memory usage scales with the number of regions in BED files
-- The parallel version (`paf_dual_coverage.py`) duplicates data structures across processes
+3. **Customize thresholds**  
+   Edit the `min_score` and `min_coverage` defaults in  
+   `gene_cross_matching_analysis.py` to suit your data quality.
 
-### Processing Speed
-- `paf_dual_coverage.py` can process millions of alignments per minute on modern multi-core systems
-- Performance scales nearly linearly with the number of CPU cores
-- I/O typically becomes the bottleneck for very large files
-
-### Optimization Tips
-1. Use more processes (`-p`) for large PAF files
-2. Pre-filter PAF files by mapping quality if not all alignments are needed
-3. Consider splitting very large BED files if memory is limited
-4. Use SSDs for better I/O performance with large files
+---
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+1. Fork this repository  
+2. Create a feature branch (`git checkout -b feature/xyz`)  
+3. Commit your changes (`git commit -m "Add feature"`)  
+4. Push to your fork (`git push origin feature/xyz`)  
+5. Open a Pull Request against `main`  
 
-### Development Guidelines
-1. Follow PEP 8 style guidelines
-2. Add docstrings to all functions
-3. Include type hints where appropriate
-4. Update documentation for new features
-5. Add tests for new functionality
+Please adhere to the existing coding style and include tests for any new functionality.
 
-## Contact
+---
 
-For questions, issues, or suggestions, please open an issue on GitHub or contact [scao7@uthsc.edu].
+## License
+
+Released under the [MIT License](LICENSE).  
+Feel free to use, modify, and distribute as you see fit.
