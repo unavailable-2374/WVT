@@ -47,7 +47,7 @@ This repository contains two complementary Python scripts for genomic alignment 
 
 1. **Clone the repo**  
     
-    git clone [https://github.com/your-org/genome-analysis.git ](https://github.com/unavailable-2374/WVT.git) 
+    git clone [https://github.com/your-org/genome-analysis.git ]
     cd genome-analysis  
 
 2. **Create a virtual environment** (recommended)  
