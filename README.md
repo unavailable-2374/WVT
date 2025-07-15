@@ -66,65 +66,12 @@ This repository contains two complementary Python scripts for genomic alignment 
 ### PAF Dual Coverage
 
     python paf_dual_coverage.py \
-      --paf path/to/alignments.paf \
-      --out dual_coverage_summary.tsv
-
-- `--paf` — Input PAF file (tab-delimited, standard 12-column format)  
-- `--out` — Output TSV; columns: `Name`, `Type` (`query` / `reference`), `Covered_bases`
+      paf_file, query_bed, target_bed \
+      -p threads
 
 ### Gene Cross-Matching Analysis
 
-From within a directory containing one or more `*.tsv` cross-match files:
-
-    python gene_cross_matching_analysis.py
-
-This will:
-
-1. Read all `*.tsv` files in the current directory  
-2. Filter matches to `score >= 50` and `coverage >= 0.8`  
-3. Generate `gene_match_summary.csv` with per-gene metrics  
-4. Save two PNG plots:  
-   - `gene_match_summary_mean_score_histogram.png`  
-   - `gene_match_summary_count_vs_score.png`
-
----
-
-## Command-Line Arguments
-
-### `paf_dual_coverage.py`
-
-| Argument | Description                    | Required |
-| -------- | ------------------------------ | -------- |
-| `--paf`  | Path to input PAF file         | Yes      |
-| `--out`  | Path to write coverage summary | Yes      |
-
-### `gene_cross_matching_analysis.py`
-
-No arguments. The script auto-detects `*.tsv` in the working directory.
-
----
-
-## Output Files
-
-- **`dual_coverage_summary.tsv`**  
-      
-      #Name    Type       Covered_bases  
-      seq1     query      123456  
-      seq1     reference  98765  
-      ...  
-
-- **`gene_match_summary.csv`**  
-      
-      query_gene,mean_score,median_score,max_score,match_count  
-      GeneA,75.3,74.0,98.1,5  
-      GeneB,62.1,60.5,85.0,3  
-      ...  
-
-- **Plots**  
-  - `*_mean_score_histogram.png` — histogram of per-gene mean scores  
-  - `*_count_vs_score.png`    — scatter of match count vs. mean score  
-
----
+    python gene_cross_matching_analysis.py paf_file query_bed target_bed
 
 ## Dependencies
 
@@ -140,27 +87,6 @@ Optionally, via conda:
     conda create -n genome-analysis python=3.9 numpy pandas matplotlib  
     conda activate genome-analysis  
 
----
-
-## Examples
-
-1. **Compute dual coverage** for a set of long-read alignments:  
-      
-      python paf_dual_coverage.py \
-        --paf human_chr1_alignments.paf \
-        --out chr1_dual_coverage.tsv  
-
-2. **Analyze gene matches** across rice and grape species:  
-      
-      mv rice_vs_grape.tsv .  
-      mv grape_vs_maize.tsv .  
-      python gene_cross_matching_analysis.py  
-
-3. **Customize thresholds**  
-   Edit the `min_score` and `min_coverage` defaults in  
-   `gene_cross_matching_analysis.py` to suit your data quality.
-
----
 
 ## Contributing
 
