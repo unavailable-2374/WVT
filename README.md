@@ -30,7 +30,7 @@ Both tools parse CIGAR strings for accurate base-level coverage calculation and 
 
 ### Common Features
 - Base-level coverage calculation using CIGAR string parsing
-- Support for PAF format (minimap2, minigraph, etc.)
+- Support for PAF format (minimap2, wfmash, etc.)
 - BED file support for defining regions of interest
 - Mapping quality filtering
 - Detailed coverage statistics (coverage %, average depth, max depth)
